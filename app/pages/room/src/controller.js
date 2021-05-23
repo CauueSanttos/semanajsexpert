@@ -1,20 +1,27 @@
-import { constants } from "../../_shared/constants";
+import { constants } from "../../_shared/constants.js";
 
 export default class RoomController {
-  constructor({ roomInfo, socketBuilder }) {
+  constructor({ roomInfo, socketBuilder, view }) {
     this.roomInfo = roomInfo;
     this.socketBuilder = socketBuilder;
+    this.view = view;
 
     this.socket = {};
   }
 
   static async initialize(dependencies) {
-    return new RoomController(dependencies).initialize();
+    return new RoomController(dependencies)._initialize();
   }
 
   async _initialize() {
+    this._setupViewEvents();
     this.socket = this._setupSocket();
+
     this.socket.emit(constants.events.JOIN_ROOM, this.roomInfo);
+  }
+
+  _setupViewEvents() {
+    this.view.updateUserImage(this.roomInfo.user);
   }
 
   _setupSocket() {
