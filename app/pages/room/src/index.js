@@ -8,8 +8,15 @@ const user = {
   img: 'https://cdn4.iconfinder.com/data/icons/avatars-xmas-giveaway/128/bear_russian_animal_avatar-512.png',
   username: 'Cauê Santos ' + Date.now()
 };
-const room = { id: '0001', topic: 'JS Expert' };
-const roomInfo = { user, room };
+
+const urlParams = new URLSearchParams(window.location.search);
+const keys = ['id', 'topic'];
+
+const urlData = keys.map((key) => [key, urlParams.get(key)]);
+const roomInfo = {
+  room: { ...Object.fromEntries(urlData) },
+  user
+}
 
 const socketBuilder = new RoomSocketBuilder({
   socketUrl: constants.socketUrl,
