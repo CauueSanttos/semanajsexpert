@@ -22,6 +22,7 @@ export default class RoomController {
 
   _setupViewEvents() {
     this.view.updateUserImage(this.roomInfo.user);
+    this.view.updateRoomTopic(this.roomInfo.room);
   }
 
   _setupSocket() {
@@ -33,7 +34,11 @@ export default class RoomController {
   }
 
   onRoomUpdated() {
-    return (room) => console.log('room list!', room);
+    return (room) => {
+      console.log('room list!', room);
+
+      this.view.updateAttendeesOnGrid(room);
+    };
   }
 
   onUserDisconnected() {
@@ -41,6 +46,10 @@ export default class RoomController {
   }
 
   onUserConnected() {
-    return (user) => console.log('user connected!', user);
+    return (user) => {
+      console.log('user connected!', user);
+
+      this.view.addAttendeeOnGrid(user);
+    };
   }
 }
