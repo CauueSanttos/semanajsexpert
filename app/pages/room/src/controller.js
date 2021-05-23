@@ -1,3 +1,5 @@
+import Attendee from "./entities/attendee.js";
+
 import { constants } from "../../_shared/constants.js";
 
 export default class RoomController {
@@ -30,7 +32,19 @@ export default class RoomController {
       .setOnUserConnected(this.onUserConnected())
       .setOnUserDisconnected(this.onUserDisconnected())
       .setOnRoomUpdated(this.onRoomUpdated())
+      .setOnUserProfileUpgrade(this.onUserProfileUpgrade())
       .build();
+  }
+
+  onUserProfileUpgrade() {
+    return (data) => {
+      const attendee = new Attendee(data);
+      console.log(`${attendee.username} upgrade to speaker!`);
+
+      if (attendee.isSpeaker) {
+        this.view.addAttendeeOnGrid(attendee, true);
+      }
+    }
   }
 
   onRoomUpdated() {
@@ -42,14 +56,20 @@ export default class RoomController {
   }
 
   onUserDisconnected() {
-    return (user) => console.log('user disconnected!', user);
+    return (data) => {
+      const attendee = new Attendee(data);
+      console.log(`${attendee.username} disconnected!`);
+
+      this.view.removeItemFromGrid(attendee.id);
+    };
   }
 
   onUserConnected() {
-    return (user) => {
-      console.log('user connected!', user);
+    return (data) => {
+      const attendee = new Attendee(data);
+      console.log(`${attendee.username} connected!`);
 
-      this.view.addAttendeeOnGrid(user);
+      this.view.addAttendeeOnGrid(attendee);
     };
   }
 }

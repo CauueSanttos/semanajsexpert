@@ -18,6 +18,68 @@ export default class RoomsController {
     this.#updateGlobalUserData(id)
   }
 
+  disconnect(socket) {
+    console.log('disconnect!!', socket.id);
+
+    this.#logoutUser(socket);
+  }
+
+  #logoutUser(socket) {
+    const userId = socket.id;
+    const user = this.#users.get(userId);
+    
+    this.#users.delete(userId);
+
+    const { roomId } = user;
+    if (!this.rooms.has(roomId)) {
+      return;
+    }
+
+    const room = this.rooms.get(roomId);
+    const toBeRemoved = [...room.users].find(({ id }) => id === userId);
+    room.users.delete(toBeRemoved);
+
+    if (!room.users.size) {
+      this.rooms.delete(roomId);
+
+      return;
+    }
+
+    const disconnectedUserWasAnOwner = userId === room.owner.id;
+    const onlyOneUserLeft = room.users.size === 1;
+
+    if (onlyOneUserLeft || disconnectedUserWasAnOwner) {
+      room.owner = this.#getNewRoomOwner(room, socket);
+    }
+
+    this.rooms.set(roomId, room);
+
+    socket.to(roomId).emit(constants.events.USER_DISCONNECTED, user);
+  }
+
+  #getNewRoomOwner(room, socket) {
+    const users = [...room.users.values()];
+    const activeSpeakers = users.find(user => user.isSpeaker);
+
+    const [newOwner] = activeSpeakers ? [activeSpeakers] : users;
+    newOwner.isSpeaker = true;
+
+    const outdatedUser = this.#users.get(newOwner.id);
+    const updatedUser = new Attendee({
+      ...outdatedUser,
+      ...newOwner,
+    });
+
+    this.#users.set(newOwner.id, updatedUser);
+    this.#notifyUserProfileUpgrade(socket, room.id, newOwner);
+
+    return newOwner;
+  }
+
+  #notifyUserProfileUpgrade(socket, roomId, user) {
+    socket.to(roomId).emit(constants.events.UPGRADE_USER_PERMISSION, user);
+  }
+
   joinRoom(socket, { user, room }) {
     const userId = user.id = socket.id;
     const roomId = room.id;

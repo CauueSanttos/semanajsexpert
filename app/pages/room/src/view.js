@@ -20,12 +20,37 @@ export default class View {
     users.forEach(item => View.addAttendeeOnGrid(item));
   }
 
-  static addAttendeeOnGrid(item) {
+  static addAttendeeOnGrid(item, removeFirst = false) {
     const attendee = new Attendee(item);
+    const { id } = attendee;
 
     const htmlTemplate = getTemplate(attendee);
     const baseElement = attendee.isSpeaker ? gridSpeakers : gridAttendees;
 
+    if (removeFirst) {
+      View.removeItemFromGrid(id);
+      
+      baseElement.innerHTML += htmlTemplate;
+
+      return;
+    }
+
+    const existingItem = View._getExistingItemOnGrid({ id, baseElement });
+    if (existingItem) {
+      existingItem.innerHTML = htmlTemplate;
+
+      return;
+    }
+
     baseElement.innerHTML += htmlTemplate;
+  }
+
+  static removeItemFromGrid(id) {
+    const existingElement = View._getExistingItemOnGrid({ id });
+    existingElement?.remove();
+  }
+
+  static _getExistingItemOnGrid({ id, baseElement = document }) {
+    return baseElement.querySelector(`[id="${id}"]`);
   }
 }
